@@ -1,4 +1,4 @@
-"""Any connection with available exchanges."""
+"""Any connection channel with available exchanges."""
 import os, requests, hmac, hashlib
 from urllib.parse import urlencode
 
@@ -6,8 +6,6 @@ class Connection:
     def __init__(self, environment='production') -> None:
         self.environment = environment
         self.endpoints = {}
-
-        # /api/ endpoints
         endpoints = {
             'test' : '/api/v3/ping',
             'server_time' : '/api/v3/time',
@@ -27,7 +25,6 @@ class Connection:
             'options_order_book' : '/vapi/v1/depth',
             'options_mark_price' : '/vapi/v1/mark',
         }
-
         if self.environment == 'test':
             main_endpoint = 'https://testnet.binance.vision'
             self.auth_dict = {
@@ -41,21 +38,21 @@ class Connection:
                 'key' : os.environ.get('SPOT_KEY'),
                 'skey' : os.environ.get('SPOT_SKEY'),
             }
-
         # complete endpoints strings
         for endpoint in endpoints:
             if endpoint[0:7] == 'options':
                 self.endpoints[endpoint] = options_endpoint + endpoints[endpoint]
             else:
                 self.endpoints[endpoint] = main_endpoint + endpoints[endpoint]
-            
         print(self.endpoints)
 
     def ping(self) -> None:
+        """Ping the api server."""
         r = requests.get(self.endpoints['test'])
         print('ping: ' + str(r))
 
     def sha256_signature(self, endpoint_params) -> None:
+        """Create hashed sign dict for instantiated object."""
         secret = self.auth_dict['skey']
         params = urlencode(endpoint_params)
         hashedsig = hmac.new(secret.encode('utf-8'), params.encode('utf-8'), hashlib.sha256).hexdigest()
