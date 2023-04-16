@@ -5,7 +5,7 @@ import requests
 
 class Information(Connection):
     def __init__(self) -> None:
-        super().__init__(environment='production')
+        super().__init__()
 
     def tickers_list(self, market=None) -> None:
         r1 = requests.get(self.endpoints['exchange_info'], auth=(self.auth_dict['key'], self.auth_dict['skey']))
