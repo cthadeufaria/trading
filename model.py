@@ -1,7 +1,7 @@
-"""Any mathematical model for defining current status."""
+"""Any mathematical model that define and quantify current status."""
 import numpy as np
 
-class gmlang():
+class GLang:
     """Class to define and update the model based on Guangming Lang paper."""
     def __init__(self, close_price, variance, delta=0.0001) -> None:
         self.mu = close_price
@@ -9,8 +9,31 @@ class gmlang():
         self.Q = delta / (1 - delta)
         self.R = self.P
 
-    def update(self, mu, variance, volume) -> None:
-        self.mu = mu
-        self.P = variance
-        self.Q = self.Q
-        self.R = self.P * ((volume[0]) / np.minimum(volume[0], volume[1]))
+    def update(self, last_volume, current_volume) -> None:
+        # self.mu = close_price
+        # self.P = variance
+        self.R = self.P * ((last_volume) / np.minimum(last_volume, current_volume))
+
+
+class RuizCruz:
+    """Class to define and update the mathematical model to be controlled."""
+    def __init__(self, nak, pk, mk):
+        self.vpk = pk*nak + mk
+        self.mk = mk
+        self.nak = nak
+
+        self.vpk1 = self.vpk
+        self.mk1 = mk
+        self.nak1 = nak
+
+    def update(self, pk, dpk, r, uk) -> None:
+        self.nam = np.absolute(uk)
+        self.alfa = np.sign(uk)
+
+        self.vpk1 = self.vpk + dpk*self.nak + dpk*uk - r*pk*self.nam
+        self.mk1 = self.mk - pk*uk - r*pk*self.nam
+        self.nak1 = self.nak + uk
+
+        self.vpk = self.vpk1
+        self.mk = self.mk1
+        self.nak = self.nak1
