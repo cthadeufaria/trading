@@ -39,11 +39,14 @@ for k in range(1, len(klines[tickers[0]]['close'])):
         glang.update(float(n[1]['volume'][k-1]), float(n[1]['volume'][k]), P)
         R = np.array(np.ones(d) * glang.R)
         Y = np.array(np.ones(d) * float(n[1]['close'][k]))[:, np.newaxis]
-        print('Percent error: ', ((Y-X)/Y)*100)
+        print('Percent state prediction error: ', ((Y-X)/Y)*100)
         print(X, Y, P, R, float(n[1]['volume'][k-1]), float(n[1]['volume'][k]))
         X, P = filter.predict(X, P, A, Q, B, U)
         X, P = filter.update(X, P, Y, H, R)
 
+# TODO 
+# test variance prediction error
+# expand price/variance prediction logic for multiple assets
 # implement Markowitz portfolio model
 
 
