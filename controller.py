@@ -51,8 +51,8 @@ class KalmanFilter(KalmanFilter1D):
         IS = H @ P @ H.T + R  
         K = P @ H.T @ np.linalg.inv(IS) 
         X = X + K @ (Y - H @ X) 
-        # P = P - K @ IS @ K.T 
-        P = P - K @ H @ P 
+        P = P - K @ IS @ K.T 
+        # P = P - K @ H @ P 
         return (X, P)
     
 

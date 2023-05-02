@@ -7,13 +7,13 @@ class GLang:
         self.mu = close_price
         self.P = variance
         self.Q = delta / (1 - delta)
-        self.R = self.P
+        # self.R = self.P
 
-    def update(self, last_volume, current_volume) -> None:
-        # self.mu = close_price
-        # self.P = variance
-        self.R = self.P * ((last_volume) / np.minimum(last_volume, current_volume))
-
+    def update(self, last_volume, current_volume, P) -> None:
+        if np.minimum(last_volume, current_volume) == 0:
+            pass
+        else:
+            self.R = P * ((last_volume) / np.minimum(last_volume, current_volume))
 
 class RuizCruz:
     """Class to define and update the mathematical model to be controlled."""
