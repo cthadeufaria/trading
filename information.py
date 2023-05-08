@@ -17,7 +17,7 @@ class Information(Connection):
                     self.tickers.append(r1.json()['symbols'][i]['symbol'])
                 elif market == None:
                     self.tickers.append(r1.json()['symbols'][i]['symbol'])
-        print(self.tickers)
+        print('Tickers list gathered successfully.')
 
     def candlestick(self, tickers, limit=1000, interval='1h', endTime=None) -> dict:
         #   Kline intervals: m -> minutes; h -> hours; d -> days; w -> weeks; M -> months
@@ -25,7 +25,7 @@ class Information(Connection):
         data = {}
         if type(tickers) != list:
             tickers=[tickers]
-        for t in tickers: # TODO change for loop to list comprehension format
+        for t in tickers: # TODO change 'for' loop to list comprehension format
             if endTime == None:
                 url = self.endpoints['candlestick']+'?'+'symbol='+ t +'&interval='+interval+'&limit=' + str(limit)
             else:
@@ -45,4 +45,5 @@ class Information(Connection):
             ]
             candle_info = pd.DataFrame(data=r4.json(), columns=candle_columns)
             data[t] = candle_info
+        print('Candlestick info gathered successfully.')
         return data

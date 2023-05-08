@@ -6,14 +6,14 @@ class GLang:
     def __init__(self, close_price, variance, delta=0.0001) -> None:
         self.mu = close_price
         self.P = variance
-        self.Q = delta / (1 - delta)
+        # self.Q = (delta/(1-delta))
+        self.Q = np.eye(len(self.P)) * (delta/(1-delta))
         # self.R = self.P
 
     def update(self, last_volume, current_volume, P) -> None:
-        if np.minimum(last_volume, current_volume) == 0:
-            pass
-        else:
-            self.R = P * ((last_volume) / np.minimum(last_volume, current_volume))
+        denominator = np.minimum(last_volume, current_volume)
+        denominator[denominator == 0] = 0.0001
+        self.R = P * ((last_volume) / denominator)
 
 class RuizCruz:
     """Class to define and update the mathematical model to be controlled."""
