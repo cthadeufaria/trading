@@ -4,13 +4,13 @@ from controller import KalmanFilter
 from model import GLang
 from portfolio import Markowitz
 import numpy as np
-import matplotlib.pyplot as plt
 
+# get data from exchange
 binance = Information()
 binance.ping()
-# binance.tickers_list(market='BUSD')
-# tickers = binance.tickers
-tickers = ['BTCBUSD', 'BNBBUSD'] 
+binance.tickers_list(market='BUSD')
+tickers = binance.tickers
+# tickers = ['BTCBUSD', 'BNBBUSD', 'DOGEBUSD']
 c = binance.candlestick(tickers, interval='1d')
 klines = {k:v for k, v in c.items() if len(v) == 1000}
 
@@ -20,8 +20,6 @@ variance = np.diagflat([(float(df['close'][0]) - ((float(df['high'][0]) - float(
 glang = GLang(close_price, variance)
 filter = KalmanFilter()
 d = len(klines)
-markowitz = Markowitz()
-markowitz.calculate_variance_covariance_matrix(klines)
 
 # initial conditions
 X = glang.mu
@@ -33,8 +31,8 @@ U = np.zeros(d)[:, np.newaxis]
 Y = glang.mu
 H = np.eye(d)
 
+# X, P prediction iterations
 iterations = len(list(klines.values())[0]['close'])
-
 for k in range(1, iterations):
     last_volume = np.array([float(df['volume'][k-1]) for df in list(klines.values())])[:, np.newaxis]
     current_volume = np.array([float(df['volume'][k]) for df in list(klines.values())])[:, np.newaxis]
@@ -44,8 +42,9 @@ for k in range(1, iterations):
     X, P = filter.predict(X, P, A, Q, B, U)
     X, P = filter.update(X, P, Y, H, glang.R)
 
-    if k==(iterations - 1):
-        markowitz.expected_returns(X, Y)
+# Build Markowitz portfolio
+markowitz = Markowitz(klines, X)
+markowitz.optmize_sharpe_ratio()
 
 
 
@@ -57,7 +56,9 @@ for k in range(1, iterations):
     # update Glang model for accomodating arrays [ok]
 # implement Markowitz portfolio model []
     # try PMPT after Markowitz
+# implement better sharpe ratio optimization method using stochastic gradient ascent
 # update binance.tickers to a faster code
 # clean klines items that don't have 1k observations after candlestick method [ok]
+# calculate mse []
 
 
