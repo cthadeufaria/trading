@@ -50,6 +50,10 @@ class Connection:
         """Ping the api server."""
         r = requests.get(self.endpoints['test'])
         print('ping: ' + str(r))
+        if str(r) == "<Response [200]>":
+            pass
+        else:
+            raise Exception("Connection with exchange server unsuccessful.")
 
     def sha256_signature(self, endpoint_params) -> None:
         """Create hashed sign dict for instantiated object."""

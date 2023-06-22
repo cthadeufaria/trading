@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 from scipy import optimize
-# from tools import stochastic_gradient
+from pypfopt.efficient_frontier import EfficientFrontier
 
 class Markowitz:
     def __init__(self, klines, X, rf=0.) -> None:
@@ -19,37 +19,43 @@ class Markowitz:
         self.expected_returns = self.returns[:, -1][:, np.newaxis]
         self.rf = rf
 
-    def optmize_sharpe_ratio(self):
-        def sharpe_ratio(weights, expected_returns, variance_covariance_matrix, rf):
-            portfolio_expected_return = weights.T @ expected_returns
-            portfolio_std = np.sqrt(weights.T @ variance_covariance_matrix @ weights)
-            sharpe = (portfolio_expected_return - rf) / portfolio_std
-            return -sharpe
-        
-        def constraints1(weights):
-            A = np.ones(weights.shape)
-            b = 1
-            constraint_value = np.matmul(A, weights.T) - b 
-            return constraint_value
-        
-        def constraints2(weights):
-            return sum(weights) - 1
-        
-        cons = (
-            {'type': 'ineq', 'fun':constraints1},
-            {'type': 'eq', 'fun':constraints2}
-        )
-        bnds = tuple([(0, 1) for x in self.weights])
-        opt = optimize.minimize (
-            sharpe_ratio, 
-            x0 = self.weights, 
-            args = (self.expected_returns, self.variance_covariance_matrix, self.rf), 
-            method = 'SLSQP', 
-            bounds = bnds,
-            constraints = cons, 
-            tol = 10**-3
-        )
-        self.weights = opt.x[:, np.newaxis]
-
-    def sharpe_gradient(self):
-        pass # insert sharpe ratio gradient function
+    def optmize_sharpe_ratio(self, method, lower_bound, upper_bound):
+        if method == 'scipy':
+            def sharpe_ratio(weights, expected_returns, variance_covariance_matrix, rf):
+                self.portfolio_expected_return = weights.T @ expected_returns
+                self.portfolio_std = np.sqrt(weights.T @ variance_covariance_matrix @ weights)
+                self.sharpe_ratio = (self.portfolio_expected_return - rf) / self.portfolio_std
+                return -self.sharpe_ratio
+            
+            def constraints1(weights):
+                A = np.ones(weights.shape)
+                return A @ weights.T - 1
+            
+            def constraints2(weights):
+                return sum(weights) - 1
+            
+            cons = (
+                {'type': 'ineq', 'fun':constraints1},
+                {'type': 'eq', 'fun':constraints2}
+            )
+            bnds = tuple([(lower_bound, upper_bound) for x in self.weights])
+            opt = optimize.minimize (
+                sharpe_ratio, 
+                x0 = self.weights, 
+                args = (self.expected_returns, self.variance_covariance_matrix, self.rf), 
+                method = 'SLSQP', 
+                bounds = bnds,
+                constraints = cons,
+                tol = 10**-3
+            )
+            self.weights = opt.x[:, np.newaxis]
+        elif method == 'pypfopt':
+            efficient_portfolio = EfficientFrontier(self.expected_returns, self.variance_covariance_matrix, weight_bounds=(lower_bound, upper_bound))
+            weights = efficient_portfolio.max_sharpe() 
+            clean_weights = efficient_portfolio.clean_weights() 
+            print(clean_weights)
+            efficient_portfolio.portfolio_performance(verbose=True)
+        elif method == 'sga':
+            pass
+        else:
+            raise Exception("Argument \"method\" has not an expected value.")
