@@ -44,7 +44,7 @@ class Connection:
                 self.endpoints[endpoint] = options_endpoint + endpoints[endpoint]
             else:
                 self.endpoints[endpoint] = main_endpoint + endpoints[endpoint]
-        print(self.endpoints)
+        # print(self.endpoints)
 
     def ping(self) -> None:
         """Ping the api server."""

@@ -1,7 +1,7 @@
 """Any information channel."""
 from connection import Connection
 import pandas as pd
-import requests
+import requests, time
 
 class Information(Connection):
     def __init__(self) -> None:
@@ -47,3 +47,9 @@ class Information(Connection):
             data[t] = candle_info
         print('Candlestick info gathered successfully.')
         return data
+    
+    def get_timestamp(self):
+        t = int(time.time()*1000)
+        servertime = requests.get(self.endpoints['server_time'])
+        st = servertime.json()['serverTime']
+        return st, t

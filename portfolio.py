@@ -6,7 +6,7 @@ from pypfopt.efficient_frontier import EfficientFrontier
 
 class Markowitz:
     """Class to implement Markowitz portfolio model."""
-    def __init__(self, klines, X, rf=0., filter_positive_returns=True, filter_variance=True) -> None:
+    def __init__(self, klines, X, rf=0., filter_positive_returns=True, filter_n_bigger_returns=True, n=10) -> None:
         i = len(klines.values())
         j = len(list(klines.values())[0]['close'])
         tickers = list(klines.keys())
@@ -14,14 +14,18 @@ class Markowitz:
         for k in range(0, i):
             close = np.array(pd.concat([list(klines.values())[k]['close'], pd.Series(str(X[k, 0]))], ignore_index=True).astype(float))[np.newaxis, :]
             returns[k] = np.diff(close)/close[:, :-1]
-        if filter_positive_returns == True:
+        if filter_positive_returns:
             returns = np.where(returns[:, -1][:, np.newaxis] <= 0, np.zeros(shape=(returns[0, :].shape))[np.newaxis, :], returns)
-        # if filter_variance == True:
-        #     returns = np.where(returns[:, -1][:, np.newaxis] <= 0, np.zeros(shape=(returns[0, :].shape))[np.newaxis, :], returns)
+        if filter_n_bigger_returns:
+            threshold = returns[:, -1][np.argsort(returns[:, -1])][-(n+1)]
+            returns = np.where(returns[:, -1][:, np.newaxis] <= threshold, np.zeros(shape=(returns[0, :].shape))[np.newaxis, :], returns)
         keys = [False if a==0. else True for a in returns[:, -1]]
         self.tickers = [t for (t, k) in zip(tickers, keys) if k==True]
         self.returns = returns[~np.all(returns == 0, axis=1)]
         self.variance_covariance_matrix = np.cov(self.returns)
+        # if P_variance:
+        #     diag = [t for (t, k) in zip(np.diagonal(P), keys) if k==True]
+        #     np.fill_diagonal(self.variance_covariance_matrix, diag)
         self.expected_returns = self.returns[:, -1][:, np.newaxis]
         l = self.expected_returns.shape[0]
         w = np.random.rand(l)
