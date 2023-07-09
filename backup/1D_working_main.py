@@ -1,6 +1,6 @@
 """Main trading logic."""
 from information import Information
-from controller import KalmanFilter
+from functions import KalmanFilter
 from model import GLang
 import numpy as np
 import matplotlib.pyplot as plt

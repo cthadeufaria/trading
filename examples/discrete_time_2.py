@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-from controller import PID
+from functions import PID
 from model import RuizCruz
 
 # PID parameters

@@ -1,5 +1,6 @@
 """Any input/output model used for creating a portfolio."""
 import numpy as np
+import pandas as pd
 
 class KalmanFilter1D:
     """Class to implement 1 dimensional Kalman Filter."""
@@ -12,7 +13,6 @@ class KalmanFilter1D:
         # Calculate the new parameters
         new_mean = (var2*mean1 + var1*mean2)/(var2+var1)
         new_var = 1/(1/var2 + 1/var1)
-        
         return [new_mean, new_var]
 
     def predict1D(mean1, var1, mean2, var2):
@@ -21,7 +21,6 @@ class KalmanFilter1D:
         # Calculate the new parameters
         new_mean = mean1 + mean2
         new_var = var1 + var2
-        
         return [new_mean, new_var]
 
 
@@ -79,23 +78,52 @@ class PID:
         uk = np.maximum(uk, -nak)
         return uk
     
-    # def controller(ts, vpk, vref, uk_prev, e_prev, pk, dpk, mk, nak, r):
-        # kp = 0.8
-        # ti = 5
-        # e = vref - vpk
-        # # e = kp*e_prev + r*pk*np.absolute(uk_prev)
-        # # uk = uk_prev + kp*(e - e_prev) + (kp/ti)*ts*e
-        # uk = (e_prev - dpk*nak - kp*e_prev)/(dpk)
-        # alfa = np.sign(uk)
-        # nam = np.absolute(uk)
+    def controller(ts, vpk, vref, uk_prev, e_prev, pk, dpk, mk, nak, r):
+        kp = 0.8
+        ti = 5
+        e = vref - vpk
+        # e = kp*e_prev + r*pk*np.absolute(uk_prev)
+        # uk = uk_prev + kp*(e - e_prev) + (kp/ti)*ts*e
+        uk = (e_prev - dpk*nak - kp*e_prev)/(dpk)
+        alfa = np.sign(uk)
+        nam = np.absolute(uk)
+        if alfa == 1:
+            if nam > mk/((1 + r)*pk):
+                uk = mk/((1 + r)*pk)
+        elif alfa == -1:
+            if nam > nak:
+                uk = -nak
+        nam = np.absolute(uk)
+        return uk, e, nam
 
-        # if alfa == 1:
-        #     if nam > mk/((1 + r)*pk):
-        #         uk = mk/((1 + r)*pk)
-        # elif alfa == -1:
-        #     if nam > nak:
-        #         uk = -nak
 
-        # nam = np.absolute(uk)
+class StochasticGradient:
+    """Class to optimize function using stochastic gradient."""
+    def __init__(self, learning_rate, weights, gradient, type='ascent') -> None:
+        self.learning_rate = learning_rate
+        self.weights = weights
+        self.gradient = gradient
+        if type == 'ascent':
+            self.sum = 1.
+        elif type == 'descent':
+            self.sum = -1.
+        else:
+            raise Exception("Parameter \"type\" must be either \"ascent\" or \"descent\".") 
 
-        # return uk, e, nam
+    def optimize(self):
+        pass
+
+
+class PortfolioFilter:
+    """Class to filter portfolio assets' dictionaries based on financial attributes."""
+    def __init__(self) -> None:
+        pass
+
+    def length(self, c, length=1000):
+        return {k:v for k, v in c.items() if len(v) == length}
+        
+    def volume(self, c, volume=1e4):
+        return {k:v for k, v in c.items() if pd.to_numeric(v['volume'][999]) > volume}
+    
+    # def variance(self, c, variance):
+    #     return {k:v for k, v in c.items() if np.var(v[])}

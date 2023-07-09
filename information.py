@@ -11,7 +11,7 @@ class Information(Connection):
         r1 = requests.get(self.endpoints['exchange_info'], auth=(self.auth_dict['key'], self.auth_dict['skey']))
         # get all tickers list where dict['symbols']['status']=='TRADING':
         self.tickers = []
-        for i in range(0, len(r1.json()['symbols'])): # TODO change 'for loop' for list comprehension format
+        for i in range(0, len(r1.json()['symbols'])): # TODO change 'for loop' for list comprehension format (faster)
             if r1.json()['symbols'][1]['status'] == 'TRADING':
                 if r1.json()['symbols'][i]['quoteAsset'] == market:
                     self.tickers.append(r1.json()['symbols'][i]['symbol'])

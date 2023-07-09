@@ -1,19 +1,22 @@
 """Main trading logic."""
 from information import Information
-from controller import KalmanFilter
+from functions import KalmanFilter, PortfolioFilter
 from model import GLang
 from portfolio import Markowitz
+import matplotlib.pyplot as plt
 import numpy as np
 
 # get data from exchange
 binance = Information()
 binance.ping()
-# binance.tickers_list(market='BUSD')
-# tickers = binance.tickers
-tickers = ['BTCBUSD', 'BNBBUSD', 'DOGEBUSD', 'ALPACABUSD']
-# tickers = ['BTCBUSD', 'BNBBUSD', 'DOGEBUSD', 'ETHBUSD', 'XRPBUSD']
+binance.tickers_list(market='BUSD')
+tickers = binance.tickers
+# tickers = ['BTCBUSD', 'BNBBUSD', 'DOGEBUSD', 'ETHBUSD', 'COMPBUSD', 'WAVESBUSD', 'AUDBUSD', 'GBPBUSD']
 c = binance.candlestick(tickers, interval='1d')
-klines = {k:v for k, v in c.items() if len(v) == 1000}
+
+# primary filter
+filter = PortfolioFilter()
+klines = filter.length(c)
 
 # initialize objects
 close_price = np.array([float(df['close'][0]) for df in list(klines.values())])[:, np.newaxis]
@@ -40,39 +43,66 @@ for k in range(1, iterations):
     glang.update(last_volume, current_volume, P)
     Y = np.array([float(df['close'][k]) for df in list(klines.values())])[:, np.newaxis]
     if k == iterations - 1:
-        print('Mean percent state prediction error: ', np.mean(((Y-X)/Y)*100))
+        print('Last iteration average percent state prediction error: ', np.mean(((Y-X)/Y)*100))
     X, P = filter.predict(X, P, A, Q, B, U)
     X, P = filter.update(X, P, Y, H, glang.R)
 
 # Build Markowitz portfolio
 markowitz = Markowitz(klines, X)
-markowitz.optmize_sharpe_ratio(method='scipy', lower_bound=-1., upper_bound=1.)
+markowitz.optmize_sharpe_ratio(method='scipy', lower_bound=0., upper_bound=1.)
 print('================ Portfolio allocation finished successfully ================')
-print('Weights: ', "\n", markowitz.weights)
-print('Sharpe ratio: ', markowitz.sharpe_ratio[0])
-print('Expected return: ', markowitz.portfolio_expected_return[0])
+print('Tickers: ', markowitz.tickers)
+print('Weights: ', markowitz.weights.T)
+print('Sharpe ratio: ', markowitz.sharpe_ratio)
+print('Expected return: ', markowitz.portfolio_expected_return)
 print('Expected risk: ', markowitz.portfolio_std)
-print('Expected returns: ', markowitz.expected_returns)
+print('Expected returns: ', markowitz.expected_returns.T)
+print('Covariance matrix: ',markowitz.variance_covariance_matrix)
+print('P: ', P)
+print('Linearly optimized portfolio: ', {markowitz.tickers[i]: markowitz.weights[i][0] for i in list(np.where(markowitz.weights >= 0.01)[0])})
+
+# Generate 'n' random portfolios
+random_portfolio_expected_return, random_portfolio_std, random_sharpe_ratio, random_weights = markowitz.random_generator(n=10e5)
+
+# Select highest Sharpe ratio random portfolio
+id = np.where(random_sharpe_ratio == max(random_sharpe_ratio))[0][0]
+print('Best random portfolio: ', {markowitz.tickers[i]: random_weights[id][i] for i in list(np.where(random_weights[id] >= 0.01)[0])})
+
+# Plot random portfolios and best Sharpe portfolios
+plt.figure(figsize=(10, 7))
+plt.scatter(random_portfolio_std, random_portfolio_expected_return, c=random_sharpe_ratio, marker='o', alpha=0.3)
+plt.scatter(markowitz.portfolio_std, markowitz.portfolio_expected_return, color='red', marker='*')
+plt.scatter(random_portfolio_std[id], random_portfolio_expected_return[id], color='orange', marker='*')
+plt.show()
+
 print('Portfolio allocation finished successfully.')
 
 
 
-# TODO 
-# Check mean percent state prediction error peaks
-# test which time period in binance.candlestick has the best predictions
-# test variance prediction error
+"""
+TODO 
+.check mean percent state prediction error peaks
+.test which time period in binance.candlestick has the best predictions
+.test variance prediction error
+.implement Markowitz portfolio model []
+    .check scipy optimization through plotting of efficient frontier [ok]
+    .check maximum sharpe portfolio weights and tickers for random portfolio with many assets [ok]
+    .remove variance outliers. how to use P matrix in Markowitz model? [] 1
+    .try gradient ascent for sharpe ratio optimization method [] 5
+    .check if 'weights' matrix has the same order of assets as klines
+    .try PMPT after Markowitz
+    .how to incorporate a risk free asset? based on usd [] 2
+.update to a faster code
+    .binance.candlestick
+    .binance.tickers
+.calculate mse
+.what's the minimum volatility portfolio?
+.what's the best time to buy and sell? what are the datetimes of the klines in CET? [] 3
+.buy portfolio [] 4
+"""
+
 # expand price/variance prediction logic for multiple assets [ok]
     # update Glang model for accomodating arrays [ok]
-# implement Markowitz portfolio model []
-    # try another sharpe ratio optimization method [] 
-    # check if 'weights' matrix has the same order of assets as klines
-    # how to use P matrix in Markowitz model? []
-    # try PMPT after Markowitz
-# implement better sharpe ratio optimization method using stochastic gradient ascent
-# update to a faster code
-    # binance.candlestick
-    # binance.tickers
 # clean klines items that don't have 1k observations after candlestick method [ok]
-# calculate mse
-
-
+# create option to remove negative self.returns [ok]
+    # remove asset data accordingly [ok]
