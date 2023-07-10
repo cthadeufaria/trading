@@ -19,8 +19,8 @@ filter = PortfolioFilter()
 klines = filter.length(c)
 
 # initialize objects
-close_price = np.array([float(df['close'][0]) for df in list(klines.values())])[:, np.newaxis]
-variance = np.diagflat([(float(df['close'][0]) - ((float(df['high'][0]) - float(df['low'][0])) / 2)) for df in list(klines.values())])
+close_price = np.array([float(df['open'][0]) for df in list(klines.values())])[:, np.newaxis]
+variance = np.diagflat([(float(df['open'][0]) - ((float(df['high'][0]) - float(df['low'][0])) / 2)) for df in list(klines.values())])
 glang = GLang(close_price, variance)
 filter = KalmanFilter()
 d = len(klines)
@@ -36,12 +36,12 @@ Y = glang.mu
 H = np.eye(d)
 
 # X, P prediction iterations
-iterations = len(list(klines.values())[0]['close'])
+iterations = len(list(klines.values())[0]['open'])
 for k in range(1, iterations):
     last_volume = np.array([float(df['volume'][k-1]) for df in list(klines.values())])[:, np.newaxis]
     current_volume = np.array([float(df['volume'][k]) for df in list(klines.values())])[:, np.newaxis]
     glang.update(last_volume, current_volume, P)
-    Y = np.array([float(df['close'][k]) for df in list(klines.values())])[:, np.newaxis]
+    Y = np.array([float(df['open'][k]) for df in list(klines.values())])[:, np.newaxis]
     if k == iterations - 1:
         print('Last iteration average percent state prediction error: ', np.mean(((Y-X)/Y)*100))
     X, P = filter.predict(X, P, A, Q, B, U)
@@ -81,10 +81,10 @@ TODO
 .implement Markowitz portfolio model []
     .check scipy optimization through plotting of efficient frontier [ok]
     .check maximum sharpe portfolio weights and tickers for random portfolio with many assets [ok]
-    .how to use P matrix in Markowitz model? Why it's not positive semi-definite if replaced the diagonal by np.diagonal(P)? []
+    .how to use P matrix in Markowitz model? Why it's not positive semi-definite if replaced the diagonal by np.diagonal(P)?
     .try gradient ascent for sharpe ratio optimization method [] 5
     .check if 'weights' matrix has the same order of assets as klines
-    .filter n bigger expected returns [ok] 1
+    .filter n bigger expected returns [ok]
     .how to incorporate a risk free asset? based on usd [] 2
 .implement PMPT optimization
 .update to a faster code
@@ -92,9 +92,10 @@ TODO
     .binance.tickers
 .calculate mse
 .what's the minimum volatility portfolio?
-.buy portfolio [] 4
+.buy portfolio [] 3
 .implement auto update on risk free asset
 .find hour of day with more trading volume
+.test mse of hourly BTC tendency (up/down) using Kalman Filter [] 1
 """
 
 """
@@ -104,5 +105,5 @@ DONE
 .clean klines items that don't have 1k observations after candlestick method [ok]
 .create option to remove negative self.returns [ok]
     .remove asset data accordingly [ok]
-.what's the best time to buy and sell? what are the datetimes of the klines in CET? [ok] 3
+.what's the best time to buy and sell? what are the datetimes of the klines in CET? [ok]
 """
