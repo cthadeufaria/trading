@@ -122,8 +122,10 @@ class PortfolioFilter:
     def length(self, c, length=1000):
         return {k:v for k, v in c.items() if len(v) == length}
         
-    def volume(self, c, volume=1e4):
-        return {k:v for k, v in c.items() if pd.to_numeric(v['volume'][999]) > volume}
-    
+    def volume(self, c, n=30):
+        last_quote = [pd.to_numeric(v['quote_volume'][999]) for k, v in c.items()]
+        threshold = [np.argsort(last_quote)[-n]]
+        return {k:v for k, v in c.items() if pd.to_numeric(v['quote_volume'][999]) >= threshold}
+        
     # def variance(self, c, variance):
     #     return {k:v for k, v in c.items() if np.var(v[])}

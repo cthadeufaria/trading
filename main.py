@@ -9,14 +9,14 @@ import numpy as np
 # get data from exchange
 binance = Information()
 binance.ping()
-# binance.tickers_list(market='BUSD')
-# tickers = binance.tickers
-tickers = ['BTCBUSD', 'BNBBUSD', 'DOGEBUSD', 'ETHBUSD', 'COMPBUSD', 'WAVESBUSD', 'AUDBUSD', 'GBPBUSD']
+binance.tickers_list(market='BUSD')
+tickers = binance.tickers
+# tickers = ['BTCBUSD', 'BNBBUSD', 'DOGEBUSD', 'ETHBUSD', 'COMPBUSD', 'WAVESBUSD', 'AUDBUSD', 'GBPBUSD']
 c = binance.candlestick(tickers, interval='1d')
 
 # primary filter
 filter = PortfolioFilter()
-klines = filter.length(c)
+klines = filter.volume(filter.length(c))
 
 # initialize objects
 close_price = np.array([float(df['open'][0]) for df in list(klines.values())])[:, np.newaxis]
@@ -76,7 +76,8 @@ print('================ Portfolio allocation finished successfully =============
 
 
 """
-TODO 
+TODO
+.clean Binance spot wallet
 .check mean percent state prediction error peaks
 .test which time period in binance.candlestick has the best predictions
 .test variance prediction error
@@ -84,23 +85,24 @@ TODO
     .check scipy optimization through plotting of efficient frontier [ok]
     .check maximum sharpe portfolio weights and tickers for random portfolio with many assets [ok]
     .how to use P matrix in Markowitz model? Why it's not positive semi-definite if replaced the diagonal by np.diagonal(P)?
-    .try gradient ascent for sharpe ratio optimization method [] 5
+    .try gradient ascent for sharpe ratio optimization method [] 4
     .check if 'weights' matrix has the same order of assets as klines
     .filter n bigger expected returns [ok]
-    .how to incorporate a risk free asset? based on usd [] 2
+    .how to incorporate a risk free asset? based on usd [] 3
 .implement PMPT optimization
-.update to a faster code
+.update to a faster code [] 2
     .binance.candlestick
     .binance.tickers
 .what's the minimum volatility portfolio?
-.buy portfolio [] 3
 .implement auto update on risk free asset
 .find hour of day with more trading volume
 .test mse of hourly BTC tendency (up/down) using neural network [] 1
+.buy and sell automatically []
 """
 
 """
 DONE
+.check audiobusd volume - filter n biggest volumes [ok]
 .expand price/variance prediction logic for multiple assets [ok]
    .update Glang model for accomodating arrays [ok]
 .clean klines items that don't have 1k observations after candlestick method [ok]
